@@ -7,10 +7,11 @@ namespace ResturantBusserAPI.Models
 {
     public class User
     {
-        public String UserId { get; set; }
+        public int UserId { get; set; }
         public String UserName { get; set; }
-        public int MasterID { get; set; }
-        public int Active { get; set; }
+        //public String passwrd { get; set; }
+        public String MasterID { get; set; }
+        public Boolean Active { get; set; }
 
     }
 }
