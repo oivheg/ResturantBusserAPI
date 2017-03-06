@@ -18,9 +18,9 @@ namespace ResturantBusserAPI.Controllers
 
 
         }
-
+        // CreateUser are used by busser app to create a user, a new user are only added if the user input a correct master ID:
         [HttpPost]
-        public IHttpActionResult InsertStudent(User User)
+        public IHttpActionResult CreateUser(User User)
         {
 
             dbContext.Users.Add(User);
@@ -28,14 +28,16 @@ namespace ResturantBusserAPI.Controllers
 
             return Ok(User.UserId);
         }
+        // This should only be used by the MASTER and not the busser app.
+        // This Should GET all users that are currently active, this should only return the ones that are registered on the same MasterId. 
         [HttpGet]
-        public IEnumerable<User> GetAllUsers()
+        public IEnumerable<User> GetAllActiveusers()
         {
             var list = dbContext.Users.ToList();
 
             return list;
         }
-
+        // DeleteUser, right now this are not used.
         [HttpGet]
         public IHttpActionResult DeleteUser(int id)
         {
@@ -48,14 +50,14 @@ namespace ResturantBusserAPI.Controllers
             return Ok(user.UserId + " " + user.UserName + " is deleted successfully.");
 
         }
-
+        // This is used to veiw one user, and might be used by the busser to shwo the current user to the user.
         [HttpGet]
         public IHttpActionResult ViewUser(int id)
         {
             var user = dbContext.Users.Find(id);
             return Ok(user);
         }
-
+        // used to update, should be done in the User APP, 
         [HttpPost]
         public IHttpActionResult UpdatUser(User user)
         {
@@ -71,12 +73,15 @@ namespace ResturantBusserAPI.Controllers
 
             return Ok();
         }
-
+        // This is used by the user app to inform that the user is active or not.
         [HttpPost]
         public IHttpActionResult UserisActive(User user)
         {
 
+
             var usd = dbContext.Users.Find(user.UserName);
+            
+            
 
             //usd.UserName = user.UserName;
             usd.Active = user.Active;
@@ -88,7 +93,7 @@ namespace ResturantBusserAPI.Controllers
 
             return Ok();
         }
-
+        // This is a test function, and will use this to test different stuff.
         [HttpPost]
         public IHttpActionResult testUser(int id)
         {
