@@ -79,7 +79,7 @@ namespace ResturantBusserAPI.Controllers
         {
 
 
-            var usd = dbContext.Users.Find(user.UserName);
+            var usd = dbContext.Users.Find(user.UserId);
             
             
 
