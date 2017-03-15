@@ -12,6 +12,7 @@ namespace ResturantBusserAPI.Models
         //public String passwrd { get; set; }
         public String MasterID { get; set; }
         public Boolean Active { get; set; }
+        public String AppId { get; set; }
 
     }
 }

@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Web.Http;
 using ResturantBusserAPI.DBA;
 using ResturantBusserAPI.Models;
+using System.Net.Http.Headers;
 
 namespace ResturantBusserAPI.Controllers
 {
@@ -72,6 +73,54 @@ namespace ResturantBusserAPI.Controllers
             dbContext.SaveChangesAsync();
 
             return Ok();
+        }
+
+        [HttpPost]
+        public IHttpActionResult DinnerisReady()
+        {
+
+            PostRequest();
+
+                return Ok();
+        }
+
+        [HttpPost]
+        public IHttpActionResult AppId(User user)
+        {
+
+            var usd = dbContext.Users.Find(user.UserId);
+            usd.AppId = user.AppId;
+
+            return Ok();
+        }
+
+        async static void PostRequest()
+        {
+            IEnumerable<KeyValuePair<String, String>> queries = new List<KeyValuePair<String, String>>()
+            {
+                new KeyValuePair<string, string>("Content-Type", "application/json"),
+                new KeyValuePair<string, string>("Authorization", "key=AAAAvL8vPx4:APA91bFmAuSguRJ2PCcnXo14yeVePTbAa21nyNoQwn5JPJn9Bc9VPW8LvbG4I7On3JDLNnl-hKkxjCiDxV7vLRSYkT4PUN1BwrQBuKYdFQMiPNYyy_IBG3RvFbJKi1CjV2HzGHTSWwDd"),
+            };
+
+          
+            var json = new StringContent("{ \"notification\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\"  },\"to\" : \"cCuGQAtZxWQ: APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS - IopRNikTwfw7UhOFJJuTivVuLw7z - aD9Lty9g8H_bcd\"}") ;
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+               
+                client.DefaultRequestHeaders.Add("Authorization", "key=AAAAvL8vPx4:APA91bFmAuSguRJ2PCcnXo14yeVePTbAa21nyNoQwn5JPJn9Bc9VPW8LvbG4I7On3JDLNnl-hKkxjCiDxV7vLRSYkT4PUN1BwrQBuKYdFQMiPNYyy_IBG3RvFbJKi1CjV2HzGHTSWwDd");
+
+                using (HttpResponseMessage resposne = await client.PostAsync("http://www.google.com", json)) {
+                    using (HttpContent content = resposne.Content)
+                    {
+                        HttpContentHeaders headers = content.Headers;
+
+                    }
+                }
+            }
+
         }
         // This is used by the user app to inform that the user is active or not.
         [HttpPost]
