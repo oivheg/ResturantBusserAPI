@@ -32,9 +32,16 @@ namespace ResturantBusserAPI.Controllers
         // This should only be used by the MASTER and not the busser app.
         // This Should GET all users that are currently active, this should only return the ones that are registered on the same MasterId. 
         [HttpGet]
-        public IEnumerable<User> GetAllActiveusers()
+        public List<User> GetAllActiveusers()
         {
-            var list = dbContext.Users.ToList();
+            //             List<User> list =  dbContext.Users.ToList();
+            List<User> list = new List<User>();
+            foreach (var user in dbContext.Users)
+            {
+                // here we crate teh jsson array, so we area ble to use the data in the app.
+                list.Add(user);
+            }
+            
 
             return list;
         }
@@ -76,12 +83,34 @@ namespace ResturantBusserAPI.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult DinnerisReady()
+        public IHttpActionResult DinnerForAll()
         {
+            String _AppID = "cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd";
 
-           // PostRequest();
 
-                return Ok(PostRequest());
+
+            // PostRequest();
+            var usd = dbContext.Users;
+
+          
+
+
+            return Ok(PostRequest(_AppID));
+        }
+
+        [HttpPost]
+        public IHttpActionResult DinnerisReady(User user)
+        {
+            //String _AppID = "cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd";
+            String _AppID;
+
+            // PostRequest();
+            // var usd = dbContext.Users.Find(user.UserName);
+            User myUser = dbContext.Users.SingleOrDefault(_user => _user.UserName == user.UserName);
+            _AppID = myUser.AppId;
+
+            System.Diagnostics.Debug.Write("this is AppId after database " + _AppID);
+                return Ok(PostRequest(_AppID));
         }
 
         [HttpPost]
@@ -90,20 +119,26 @@ namespace ResturantBusserAPI.Controllers
 
             var usd = dbContext.Users.Find(user.UserId);
             usd.AppId = user.AppId;
+          
+
+            dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
+            dbContext.SaveChangesAsync();
 
             return Ok();
         }
 
-         static String PostRequest()
+         static String PostRequest(String AppID)
         {
             IEnumerable<KeyValuePair<String, String>> queries = new List<KeyValuePair<String, String>>()
             {
                 new KeyValuePair<string, string>("Content-Type", "application/json"),
-                new KeyValuePair<string, string>("Authorization", "key=AAAAvL8vPx4:APA91bFmAuSguRJ2PCcnXo14yeVePTbAa21nyNoQwn5JPJn9Bc9VPW8LvbG4I7On3JDLNnl-hKkxjCiDxV7vLRSYkT4PUN1BwrQBuKYdFQMiPNYyy_IBG3RvFbJKi1CjV2HzGHTSWwDd"),
+                new KeyValuePair<string, string>("Authorization", "key="+ AppID ),
+
+               // new KeyValuePair<string, string>("Authorization", "key=AAAAvL8vPx4:APA91bFmAuSguRJ2PCcnXo14yeVePTbAa21nyNoQwn5JPJn9Bc9VPW8LvbG4I7On3JDLNnl-hKkxjCiDxV7vLRSYkT4PUN1BwrQBuKYdFQMiPNYyy_IBG3RvFbJKi1CjV2HzGHTSWwDd"),
             };
 
           
-             String json = ("{ \"notification\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\"  },\"to\" : \"cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd\"}") ;
+             String json = ("{ \"notification\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \""+AppID+"\"}") ;
 
             using (WebClient client = new WebClient())
             {
