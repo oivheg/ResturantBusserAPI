@@ -32,14 +32,23 @@ namespace ResturantBusserAPI.Controllers
         // This should only be used by the MASTER and not the busser app.
         // This Should GET all users that are currently active, this should only return the ones that are registered on the same MasterId. 
         [HttpGet]
-        public List<User> GetAllActiveusers()
+        public List<User> GetAllActiveusers(int id)
         {
+            
             //             List<User> list =  dbContext.Users.ToList();
             List<User> list = new List<User>();
             foreach (var user in dbContext.Users)
             {
+                var tmpUMID = user.MasterID.ToString().Trim(); ;
+                
                 // here we crate teh jsson array, so we area ble to use the data in the app.
-                list.Add(user);
+                var tmp1 = id.ToString().Trim(); ;
+                
+                if (tmpUMID == tmp1)
+                {
+                    list.Add(user);
+                }
+                
             }
             
 

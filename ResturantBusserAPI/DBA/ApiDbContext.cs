@@ -15,6 +15,7 @@ namespace ResturantBusserAPI.DBA
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Master> Masters { get; set; }
     }
 
 }
