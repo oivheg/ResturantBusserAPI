@@ -34,23 +34,24 @@ namespace ResturantBusserAPI.Controllers
         [HttpGet]
         public List<User> GetAllActiveusers(int id)
         {
-            
+
             //             List<User> list =  dbContext.Users.ToList();
             List<User> list = new List<User>();
             foreach (var user in dbContext.Users)
             {
-                var tmpUMID = user.MasterID.ToString().Trim(); ;
-                
+                var tmpUMID = user.MasterID.ToString().Trim();
+                var active = user.Active;
+
                 // here we crate teh jsson array, so we area ble to use the data in the app.
                 var tmp1 = id.ToString().Trim(); ;
-                
-                if (tmpUMID == tmp1)
+
+                if (tmpUMID == tmp1 && active)
                 {
                     list.Add(user);
                 }
-                
+
             }
-            
+
 
             return list;
         }
@@ -84,7 +85,7 @@ namespace ResturantBusserAPI.Controllers
             usd.UserName = user.UserName;
             //usd.password = user.password;
 
-            
+
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
 
@@ -98,13 +99,13 @@ namespace ResturantBusserAPI.Controllers
 
 
 
-            // PostRequest();
+            // FCMRElay();
             var usd = dbContext.Users;
 
-          
 
 
-            return Ok(PostRequest(_AppID));
+
+            return Ok(FCMClient(_AppID));
         }
 
         [HttpPost]
@@ -113,22 +114,22 @@ namespace ResturantBusserAPI.Controllers
             //String _AppID = "cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd";
             String _AppID;
 
-            // PostRequest();
+            // FCMRElay();
             // var usd = dbContext.Users.Find(user.UserName);
             User myUser = dbContext.Users.SingleOrDefault(_user => _user.UserName == user.UserName);
             _AppID = myUser.AppId;
 
-            System.Diagnostics.Debug.Write("this is AppId after database " + _AppID);
-                return Ok(PostRequest(_AppID));
+            System.Diagnostics.Debug.Write("this is ClientAppId after database " + _AppID);
+            return Ok(FCMClient(_AppID));
         }
 
         [HttpPost]
-        public IHttpActionResult AppId(User user)
+        public IHttpActionResult ClientAppId(User user)
         {
 
             var usd = dbContext.Users.Find(user.UserId);
             usd.AppId = user.AppId;
-          
+
 
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
@@ -136,30 +137,45 @@ namespace ResturantBusserAPI.Controllers
             return Ok();
         }
 
-         static String PostRequest(String AppID)
+        public IHttpActionResult MasterAppId(Master master)
         {
-            IEnumerable<KeyValuePair<String, String>> queries = new List<KeyValuePair<String, String>>()
-            {
-                new KeyValuePair<string, string>("Content-Type", "application/json"),
-                new KeyValuePair<string, string>("Authorization", "key="+ AppID ),
 
-               // new KeyValuePair<string, string>("Authorization", "key=AAAAvL8vPx4:APA91bFmAuSguRJ2PCcnXo14yeVePTbAa21nyNoQwn5JPJn9Bc9VPW8LvbG4I7On3JDLNnl-hKkxjCiDxV7vLRSYkT4PUN1BwrQBuKYdFQMiPNYyy_IBG3RvFbJKi1CjV2HzGHTSWwDd"),
-            };
+            var usd = dbContext.Masters.Find(master.MasterID);
+            usd.AppId = master.AppId;
 
-          
-             String json = ("{ \"notification\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \""+AppID+"\"}") ;
 
+            dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
+            dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        static String FCMClient(String AppID)
+        {
+
+            String json = ("{ \"notification\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \"" + AppID + "\"}");
             using (WebClient client = new WebClient())
             {
                 client.Headers[HttpRequestHeader.ContentType] = "application/json";
                 client.Headers.Add("Authorization", "key=AAAAvL8vPx4:APA91bFmAuSguRJ2PCcnXo14yeVePTbAa21nyNoQwn5JPJn9Bc9VPW8LvbG4I7On3JDLNnl-hKkxjCiDxV7vLRSYkT4PUN1BwrQBuKYdFQMiPNYyy_IBG3RvFbJKi1CjV2HzGHTSWwDd");
-
-              
-
-                 var response = client.UploadString("https://fcm.googleapis.com/fcm/send", json);
+                var response = client.UploadString("https://fcm.googleapis.com/fcm/send", json);
                 return response;
             }
-            
+
+        }
+
+        static String FCMMaster()
+        {
+
+            String json = ("{ \"notification\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \"cXGkFRPJK9s: APA91bE4MoI9osmgcV1pqp_Zw30uKAb1b_eQy_PHkodGa7ktsl2YGYXw4Px0RE - 5lwa6ftMZZ7iAuQTHJUtrDZETUmnFjZys9BYnKxwIVe_Rac3BalHgrshg6WPdJ0IwXbQLezFYvwmf\"}");
+            using (WebClient client = new WebClient())
+            {
+                client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                client.Headers.Add("Authorization", "key=AAAALvVIaEA:APA91bEyyCkyg3vALRMMLh42nCPpN1OWzXl8GpZMWYuh7nzzY14rWcRVeNDEt9W3kLFhyKWMB7WbTJ7Sbh0YgiTPlBy8Is8-2P-zSpkDH6cbt10JTN_--oOIwuGf5h3uGCNpCWkGNW3y");
+                var response = client.UploadString("https://fcm.googleapis.com/fcm/send", json);
+                return response;
+            }
+
         }
         // This is used by the user app to inform that the user is active or not.
         [HttpPost]
@@ -168,16 +184,19 @@ namespace ResturantBusserAPI.Controllers
 
 
             var usd = dbContext.Users.Find(user.UserId);
-            
-            
+
+
 
             //usd.UserName = user.UserName;
             usd.Active = user.Active;
             //usd.password = user.password;
-
+            // Inform master of change.
+          
 
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
+  //FCMMaster();
+           
 
             return Ok();
         }
@@ -186,7 +205,7 @@ namespace ResturantBusserAPI.Controllers
         public IHttpActionResult testUser(int id)
         {
             var user = dbContext.Users.Find(id);
-            user.Active =false;
+            user.Active = false;
 
             dbContext.Entry(user).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();

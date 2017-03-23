@@ -11,8 +11,9 @@ namespace ResturantBusserAPI.Models
         public DateTime RegisterDate { get; set; }
         public String Resturant { get; set; }
         public String Email { get; set; }
-        public int Phone { get; set; }
+        public  char Phone { get; set; }
         public String Contact { get; set; }
         public String OrgNr { get; set; }
+        public String AppId { get; set; }
     }
 }
