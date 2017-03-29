@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Web.Http;
 using ResturantBusserAPI.DBA;
 using ResturantBusserAPI.Models;
-using System.Net.Http.Headers;
 
 namespace ResturantBusserAPI.Controllers
 {
@@ -24,8 +22,24 @@ namespace ResturantBusserAPI.Controllers
         public IHttpActionResult CreateUser(User User)
         {
 
-            dbContext.Users.Add(User);
-            dbContext.SaveChangesAsync();
+
+
+            // User _user = new User();
+
+            // _user.UserId = 11;
+            // _user.UserName = "olga";
+            // _user.MasterID = "1";
+            // _user.AppId = "2";
+            // _user.Active = false;
+
+
+            using (var dbCtx = new ApiDbContext())
+            {
+                //Add student object into Student's EntitySet
+                dbCtx.Users.Add(User);
+                // call SaveChanges method to save student & StudentAddress into database
+                dbCtx.SaveChanges();
+            }
 
             return Ok(User.UserId);
         }
@@ -68,11 +82,24 @@ namespace ResturantBusserAPI.Controllers
             return Ok(user.UserId + " " + user.UserName + " is deleted successfully.");
 
         }
-        // This is used to veiw one user, and might be used by the busser to shwo the current user to the user.
+        // This is used to veiw one user, and might be used by the busser to shwo the current user to the user. [FromBody]
         [HttpGet]
-        public IHttpActionResult ViewUser(int id)
+        public IHttpActionResult FindUser(String userName)
         {
-            var user = dbContext.Users.Find(id);
+            User user = null;
+            using (var context = new ApiDbContext())
+            {
+                var query = from p in context.Users
+                            where p.UserName == userName.ToLower()
+                            select p;
+
+                // This will raise an exception if entity not found
+                // Use SingleOrDefault instead
+                user = query.Single();
+
+                Console.WriteLine(user);
+            }
+
             return Ok(user);
         }
         // used to update, should be done in the User APP, 
@@ -153,7 +180,7 @@ namespace ResturantBusserAPI.Controllers
         static String FCMClient(String AppID)
         {
 
-            String json = ("{ \"notification\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \"" + AppID + "\"}");
+            String json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \"" + AppID + "\"}");
             using (WebClient client = new WebClient())
             {
                 client.Headers[HttpRequestHeader.ContentType] = "application/json";
@@ -164,10 +191,10 @@ namespace ResturantBusserAPI.Controllers
 
         }
 
-        static String FCMMaster()
+        static String FCMMaster(String AppID)
         {
 
-            String json = ("{ \"notification\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \"cXGkFRPJK9s: APA91bE4MoI9osmgcV1pqp_Zw30uKAb1b_eQy_PHkodGa7ktsl2YGYXw4Px0RE - 5lwa6ftMZZ7iAuQTHJUtrDZETUmnFjZys9BYnKxwIVe_Rac3BalHgrshg6WPdJ0IwXbQLezFYvwmf\"}");
+            String json = ("{ \"data\": { \"Refresh\": \"true\" },\"to\" : \"" + AppID + "\"}");
             using (WebClient client = new WebClient())
             {
                 client.Headers[HttpRequestHeader.ContentType] = "application/json";
@@ -184,19 +211,23 @@ namespace ResturantBusserAPI.Controllers
 
 
             var usd = dbContext.Users.Find(user.UserId);
-
+            var mstr = dbContext.Masters.Find(usd.MasterID.Trim());
 
 
             //usd.UserName = user.UserName;
             usd.Active = user.Active;
+            if (user.AppId != null)
+            {
+                usd.AppId = "";
+            }
             //usd.password = user.password;
             // Inform master of change.
-          
+            FCMMaster(mstr.AppId);
 
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
-  //FCMMaster();
-           
+            //FCMMaster();
+
 
             return Ok();
         }

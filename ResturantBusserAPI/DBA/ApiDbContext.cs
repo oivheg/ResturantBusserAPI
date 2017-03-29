@@ -11,7 +11,7 @@ namespace ResturantBusserAPI.DBA
     {
         public ApiDbContext() : base("Connection")
         {
-
+           
         }
 
         public DbSet<User> Users { get; set; }
