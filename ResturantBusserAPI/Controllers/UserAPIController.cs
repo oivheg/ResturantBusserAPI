@@ -23,16 +23,6 @@ namespace ResturantBusserAPI.Controllers
         {
 
 
-
-            // User _user = new User();
-
-            // _user.UserId = 11;
-            // _user.UserName = "olga";
-            // _user.MasterID = "1";
-            // _user.AppId = "2";
-            // _user.Active = false;
-
-
             using (var dbCtx = new ApiDbContext())
             {
                 //Add student object into Student's EntitySet
@@ -43,21 +33,38 @@ namespace ResturantBusserAPI.Controllers
 
             return Ok(User.UserId);
         }
+
+        //Creates the master user
+        public IHttpActionResult CreateMaster(Master master)
+        {
+
+            using (var dbCtx = new ApiDbContext())
+            {
+                master.RegisterDate = DateTime.Today;
+                //Add student object into Student's EntitySet
+                dbCtx.Masters.Add(master);
+                // call SaveChanges method to save student & StudentAddress into database
+                dbCtx.SaveChanges();
+            }
+
+            return Ok(master.MasterKey);
+        }
+
         // This should only be used by the MASTER and not the busser app.
         // This Should GET all users that are currently active, this should only return the ones that are registered on the same MasterId. 
         [HttpGet]
-        public List<User> GetAllActiveusers(int id)
+        public List<User> GetAllActiveusers(String masterKey)
         {
 
             //             List<User> list =  dbContext.Users.ToList();
             List<User> list = new List<User>();
             foreach (var user in dbContext.Users)
             {
-                var tmpUMID = user.MasterID.ToString().Trim();
+                var tmpUMID = user.MasterKey.ToString().Trim().ToLower();
                 var active = user.Active;
 
                 // here we crate teh jsson array, so we area ble to use the data in the app.
-                var tmp1 = id.ToString().Trim(); ;
+                var tmp1 = masterKey.ToString().Trim().ToLower(); ;
 
                 if (tmpUMID == tmp1 && active)
                 {
@@ -90,12 +97,13 @@ namespace ResturantBusserAPI.Controllers
             using (var context = new ApiDbContext())
             {
                 var query = from p in context.Users
-                            where p.UserName == userName.ToLower()
+                            where p.UserName.Trim() == userName.ToLower()
                             select p;
 
                 // This will raise an exception if entity not found
                 // Use SingleOrDefault instead
                 user = query.Single();
+                user.UserName = user.UserName.Trim();
 
                 Console.WriteLine(user);
             }
@@ -120,11 +128,23 @@ namespace ResturantBusserAPI.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult DinnerForAll()
+        public IHttpActionResult DinnerForAll(String mstrKey)
         {
             String _AppID = "cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd";
+            ;
 
 
+
+
+            foreach (var user in dbContext.Users)
+            {
+                if (mstrKey == user.MasterKey)
+                {
+                    FCMClient(user.AppId);
+                }
+
+
+            }
 
             // FCMRElay();
             var usd = dbContext.Users;
@@ -132,7 +152,7 @@ namespace ResturantBusserAPI.Controllers
 
 
 
-            return Ok(FCMClient(_AppID));
+            return Ok();
         }
 
         [HttpPost]
@@ -167,11 +187,24 @@ namespace ResturantBusserAPI.Controllers
         public IHttpActionResult MasterAppId(Master master)
         {
 
-            var usd = dbContext.Masters.Find(master.MasterID);
-            usd.AppId = master.AppId;
+            Master mstr = null;
 
 
-            dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
+            using (var context = new ApiDbContext())
+            {
+                var query = from p in context.Masters
+                            where p.MasterKey.ToLower().Trim() == master.MasterKey.ToLower().Trim()
+                            select p;
+
+                // This will raise an exception if entity not found
+                // Use SingleOrDefault instead
+                mstr = query.Single();
+                mstr.AppId = master.AppId.Trim();
+
+            }
+
+
+            dbContext.Entry(mstr).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
 
             return Ok();
@@ -211,7 +244,7 @@ namespace ResturantBusserAPI.Controllers
 
 
             var usd = dbContext.Users.Find(user.UserId);
-            var mstr = dbContext.Masters.Find(usd.MasterID.Trim());
+            var mstr = dbContext.Masters.Find(usd.MasterKey.Trim());
 
 
             //usd.UserName = user.UserName;
@@ -222,7 +255,11 @@ namespace ResturantBusserAPI.Controllers
             }
             //usd.password = user.password;
             // Inform master of change.
-            FCMMaster(mstr.AppId);
+            if (mstr != null)
+            {
+                FCMMaster(mstr.AppId);
+            }
+
 
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
