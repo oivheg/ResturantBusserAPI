@@ -60,7 +60,20 @@ namespace ResturantBusserAPI.Controllers
 
             //             List<User> list =  dbContext.Users.ToList();
             List<User> list = new List<User>();
-            foreach (var user in dbContext.Users)
+
+            var returnValue = (from e in dbContext.Users
+                               join o in dbContext.TimeStamps on e.UserGuid equals o.UserGUID
+                               select new
+                               {
+                                   e.UserName,
+                                   e.MasterKey,
+                                   e.Active,
+                                   o.Inn
+                               });
+
+
+            returnValue = returnValue.OrderBy(x => x.Inn);
+            foreach (var user in returnValue)
             {
                 var tmpUMID = user.MasterKey.ToString().Trim().ToLower();
                 var active = user.Active;
@@ -70,7 +83,9 @@ namespace ResturantBusserAPI.Controllers
 
                 if (tmpUMID == tmp1 && active)
                 {
-                    list.Add(user);
+                    User tmpUser = new User();
+                    tmpUser.UserName = user.UserName;
+                    list.Add(tmpUser);
                 }
 
             }
@@ -93,22 +108,34 @@ namespace ResturantBusserAPI.Controllers
         }
         // This is used to veiw one user, and might be used by the busser to shwo the current user to the user. [FromBody]
         [HttpGet]
-        public IHttpActionResult FindUser(String userName)
+        public IHttpActionResult FindUser(String Appid, String Email = "" )
         {
             User user = null;
-            userName = userName.ToLower().Trim();
+            
             using (var context = new ApiDbContext())
             {
-                var query = from p in context.Users
-                            where p.UserName.Trim().ToLower() == userName
-                            select p;
+               
+                if (Email != "")
+                {
+                    var query = from p in context.Users
+                                where p.Email.Trim() == Email
+                                select p;
+                    user = query.SingleOrDefault();
+                }
+                else
+                {
+                    var query = from p in context.Users
+                                where p.AppId.Trim() == Appid
+                                select p;
+                    user = query.SingleOrDefault();
+                }
+                
 
                 // This will raise an exception if entity not found
                 // Use SingleOrDefault instead
-                user = query.Single();
+             
                 user.UserName = user.UserName.Trim();
 
-                Console.WriteLine(user);
             }
 
             return Ok(user);
@@ -131,11 +158,11 @@ namespace ResturantBusserAPI.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult Msgreceived(User user)
+        public IHttpActionResult Msgreceived(String AppId)
         {
-            String AppID = "";
+       
 
-            User myUser = dbContext.Users.SingleOrDefault(_user => _user.UserName == user.UserName);
+            User myUser = dbContext.Users.SingleOrDefault(_user => _user.AppId.Trim() == AppId);
 
             Master mstr = null;
 
@@ -152,8 +179,9 @@ namespace ResturantBusserAPI.Controllers
 
 
             }
-            AppID = mstr.AppId;
-            SendDataToMaster(AppID, "recieved", user.UserName);
+            String MstrAppId = "";
+            MstrAppId = mstr.AppId;
+            SendDataToMaster(MstrAppId, "recieved", myUser.UserName);
 
             return Ok();
         }
@@ -205,7 +233,7 @@ namespace ResturantBusserAPI.Controllers
         public IHttpActionResult ClientAppId(User user)
         {
 
-            var usd = dbContext.Users.Find(user.UserId);
+            var usd = dbContext.Users.SingleOrDefault(_user => _user.UserId == user.UserId);
             usd.AppId = user.AppId;
 
 
