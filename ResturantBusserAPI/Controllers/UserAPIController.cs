@@ -7,6 +7,7 @@ using ResturantBusserAPI.DBA;
 using ResturantBusserAPI.Models;
 using System.Data.Entity.Core.Objects;
 using System.Data.Entity;
+using System.Text;
 
 namespace ResturantBusserAPI.Controllers
 {
@@ -125,7 +126,7 @@ namespace ResturantBusserAPI.Controllers
                 else
                 {
                     var query = from p in context.Users
-                                where p.AppId.Trim() == Appid
+                                where p.AppId.Trim() == Appid.Trim()
                                 select p;
                     user = query.SingleOrDefault();
                 }
@@ -180,8 +181,10 @@ namespace ResturantBusserAPI.Controllers
 
             }
             String MstrAppId = "";
-            MstrAppId = mstr.AppId;
-            SendDataToMaster(MstrAppId, "recieved", myUser.UserName);
+            byte[] bytes = Encoding.Default.GetBytes(myUser.UserName);
+            String tmpUserName = Encoding.UTF8.GetString(bytes);
+                MstrAppId = mstr.AppId;
+            SendDataToMaster(MstrAppId, "recieved", tmpUserName);
 
             return Ok();
         }
