@@ -109,32 +109,39 @@ namespace ResturantBusserAPI.Controllers
         }
         // This is used to veiw one user, and might be used by the busser to shwo the current user to the user. [FromBody]
         [HttpGet]
-        public IHttpActionResult FindUser(String Appid, String Email = "" )
+        public IHttpActionResult FindUser(String Appid, String Email = "")
         {
             User user = null;
-            
+            String tmpuser = null;
             using (var context = new ApiDbContext())
             {
-               
+
                 if (Email != "")
                 {
                     var query = from p in context.Users
                                 where p.Email.Trim() == Email
                                 select p;
                     user = query.SingleOrDefault();
+                    user.AppId = Appid;
                 }
                 else
                 {
+                    //runs stored procedures on sql serer, gets the user based on appid
+                    //var query1 = context.Database.SqlQuery<string>(
+                    //     "select * from Finduser('" + Appid + "')");
+                    //tmpuser = query1.SingleOrDefault();
+
+                    //OLD CODE, now all SQL stuff happens on the SQL server
                     var query = from p in context.Users
                                 where p.AppId.Trim() == Appid.Trim()
                                 select p;
                     user = query.SingleOrDefault();
-                }
-                
+}
+
 
                 // This will raise an exception if entity not found
                 // Use SingleOrDefault instead
-             
+                //user.UserName = tmpuser;
                 user.UserName = user.UserName.Trim();
 
             }
@@ -161,7 +168,7 @@ namespace ResturantBusserAPI.Controllers
         [HttpPost]
         public IHttpActionResult Msgreceived(String AppId)
         {
-       
+
 
             User myUser = dbContext.Users.SingleOrDefault(_user => _user.AppId.Trim() == AppId);
 
@@ -183,7 +190,7 @@ namespace ResturantBusserAPI.Controllers
             String MstrAppId = "";
             byte[] bytes = Encoding.Default.GetBytes(myUser.UserName);
             String tmpUserName = Encoding.UTF8.GetString(bytes);
-                MstrAppId = mstr.AppId;
+            MstrAppId = mstr.AppId;
             SendDataToMaster(MstrAppId, "recieved", tmpUserName);
 
             return Ok();
@@ -307,16 +314,18 @@ namespace ResturantBusserAPI.Controllers
 
         // This is used by the user app to inform that the user is active or not.
         [HttpPost]
-        public IHttpActionResult UserisActive(User user)
+        public IHttpActionResult UserisActive(User user, Boolean logout = false)
         {
+            Master mstr = null;
+            TimeStamp Tsmp = null;
 
             //User usd = dbContext.Users.SingleOrDefault(_user => _user.UserName.Trim() == user.UserName.Trim());
             //var usd = dbContext.Users.Find(user.UserId);
-            var usd = dbContext.Users.SingleOrDefault(_user => _user.UserId == user.UserId);
-            Master mstr = null;
-            //// var mstr = dbContext.Masters.Find(usd.MasterKey.Trim());
-            TimeStamp Tsmp = null;
+            var usd = dbContext.Users.SingleOrDefault(_user => _user.AppId  == user.AppId);
             
+            //// var mstr = dbContext.Masters.Find(usd.MasterKey.Trim());
+        
+
             if (user.Active)
             {
                 Tsmp = new TimeStamp();
@@ -334,7 +343,7 @@ namespace ResturantBusserAPI.Controllers
 
                     // This will raise an exception if entity not found
                     // Use SingleOrDefault instead
-                  Tsmp = query.SingleOrDefault();
+                    Tsmp = query.SingleOrDefault();
 
 
                 }
@@ -361,9 +370,9 @@ namespace ResturantBusserAPI.Controllers
 
             //usd.UserName = user.UserName;
             usd.Active = user.Active;
-            if (user.AppId != null)
+            if (logout)
             {
-                usd.AppId = "";
+                usd.AppId = "  ";
             }
             //usd.password = user.password;
             // Inform master of change.
@@ -373,7 +382,7 @@ namespace ResturantBusserAPI.Controllers
             }
 
             //Add  object into  EntitySet ( sql database) 
-           
+
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             //Saves chagnes to entity Data, Sql database
             dbContext.SaveChangesAsync();
