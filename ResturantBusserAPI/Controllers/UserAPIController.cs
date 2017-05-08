@@ -225,6 +225,20 @@ namespace ResturantBusserAPI.Controllers
         }
 
         [HttpPost]
+        public IHttpActionResult CancelDinner(User user)
+        {
+            //String _AppID = "cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd";
+            String _AppID;
+
+            
+            User myUser = dbContext.Users.SingleOrDefault(_user => _user.UserName == user.UserName);
+            _AppID = myUser.AppId;
+
+            System.Diagnostics.Debug.Write("this is ClientAppId after database " + _AppID);
+            return Ok(FCMClient(_AppID, true));
+        }
+
+        [HttpPost]
         public IHttpActionResult DinnerisReady(User user)
         {
             //String _AppID = "cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd";
@@ -279,10 +293,26 @@ namespace ResturantBusserAPI.Controllers
             return Ok();
         }
 
-        static String FCMClient(String AppID)
+        static String FCMClient(String AppID, Boolean CancelVib = false)
         {
+            String json = "";
+            if (CancelVib)
+            {
+                String value = "cancelVibration";
+                json = ("{ \"data\": { \"Action\": \"" + value + "\" },\"to\" : \"" + AppID + "\"}");
+            }
+            else
+            {
 
-            String json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \"" + AppID + "\"}");
+                 json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \"" + AppID + "\"}");
+            }
+
+            return SendData(json);
+
+        }
+
+        private static string SendData(string json)
+        {
             using (WebClient client = new WebClient())
             {
                 client.Headers[HttpRequestHeader.ContentType] = "application/json";
@@ -290,7 +320,6 @@ namespace ResturantBusserAPI.Controllers
                 var response = client.UploadString("https://fcm.googleapis.com/fcm/send", json);
                 return response;
             }
-
         }
 
         static String FCMMaster(String AppID)
@@ -299,6 +328,8 @@ namespace ResturantBusserAPI.Controllers
 
 
         }
+
+      
 
         private static string SendDataToMaster(string AppID, string value, string user)
         {
