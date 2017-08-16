@@ -365,10 +365,14 @@ namespace ResturantBusserAPI.Controllers
 
             //User usd = dbContext.Users.SingleOrDefault(_user => _user.UserName.Trim() == user.UserName.Trim());
             //var usd = dbContext.Users.Find(user.UserId);
-            var usd = dbContext.Users.SingleOrDefault(_user => _user.AppId  == user.AppId);
-            
+            var usd = dbContext.Users.SingleOrDefault(_user => _user.AppId.ToLower().Trim()  == user.AppId.ToLower().Trim());
+
             //// var mstr = dbContext.Masters.Find(usd.MasterKey.Trim());
-        
+            if (usd.Active)
+            {
+                return BadRequest("User was Already active");
+
+            }
 
             if (user.Active)
             {
@@ -395,6 +399,7 @@ namespace ResturantBusserAPI.Controllers
                 Tsmp.Out = DateTime.Now;
 
                 dbContext.Entry(Tsmp).State = System.Data.Entity.EntityState.Modified;
+                return Ok();
             }
 
 
