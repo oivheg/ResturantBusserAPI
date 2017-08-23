@@ -6,6 +6,8 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Web.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ResturantBusserAPI.Controllers
 {
@@ -18,21 +20,21 @@ namespace ResturantBusserAPI.Controllers
         }
         // CreateUser are used by busser app to create a user, a new user are only added if the user input a correct master ID:
         [HttpPost]
-        public IHttpActionResult CreateUser(User User)
+        public async Task<IHttpActionResult> CreateUser(User User)
         {
             using (var dbCtx = new ApiDbContext())
             {
                 //Add student object into Student's EntitySet
                 dbCtx.Users.Add(User);
                 // call SaveChanges method to save student & StudentAddress into database
-                dbCtx.SaveChangesAsync();
+                await dbCtx.SaveChangesAsync();
             }
 
             return Ok(User.UserId);
         }
 
         //Creates the master user
-        public IHttpActionResult CreateMaster(Master master)
+        public async Task<IHttpActionResult> CreateMaster(Master master)
         {
             using (var dbCtx = new ApiDbContext())
             {
@@ -40,7 +42,8 @@ namespace ResturantBusserAPI.Controllers
                 //Add student object into Student's EntitySet
                 dbCtx.Masters.Add(master);
                 // call SaveChanges method to save student & StudentAddress into database
-                dbCtx.SaveChangesAsync();
+                //dbContext.Entry(master).State = System.Data.Entity.EntityState.Added;
+                await dbCtx.SaveChangesAsync();
             }
 
             return Ok(master.MasterKey);
@@ -138,7 +141,8 @@ namespace ResturantBusserAPI.Controllers
                 user.UserName = user.UserName.Trim();
 
             }
-
+            dbContext.Entry(user).State = System.Data.Entity.EntityState.Modified;
+            dbContext.SaveChangesAsync();
             return Ok(user);
         }
         // used to update, should be done in the User APP, 
@@ -368,11 +372,10 @@ namespace ResturantBusserAPI.Controllers
             var usd = dbContext.Users.SingleOrDefault(_user => _user.AppId.ToLower().Trim()  == user.AppId.ToLower().Trim());
 
             //// var mstr = dbContext.Masters.Find(usd.MasterKey.Trim());
-            if (usd.Active)
-            {
-                return BadRequest("User was Already active");
+           
+            //need to prevent aldready loggen in user from logging in again, either "login out" fucntion or just oversee. porblem lies with if there is multiple timestamps. 
 
-            }
+            // probalby just check if ther is exsisting timestamp and just use that . 
 
             if (user.Active)
             {
@@ -399,7 +402,7 @@ namespace ResturantBusserAPI.Controllers
                 Tsmp.Out = DateTime.Now;
 
                 dbContext.Entry(Tsmp).State = System.Data.Entity.EntityState.Modified;
-                return Ok();
+               
             }
 
 
