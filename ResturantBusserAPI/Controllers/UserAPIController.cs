@@ -163,11 +163,11 @@ namespace ResturantBusserAPI.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult Msgreceived(String AppId)
+        public IHttpActionResult Msgreceived(User user)
         {
+            String AppId = user.AppId;
 
-
-            User myUser = dbContext.Users.SingleOrDefault(_user => _user.AppId.Trim() == AppId);
+            User myUser = dbContext.Users.SingleOrDefault(_user => _user.AppId.Trim() == AppId.Trim());
 
             Master mstr = null;
 
