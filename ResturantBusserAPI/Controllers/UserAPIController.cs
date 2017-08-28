@@ -127,7 +127,7 @@ namespace ResturantBusserAPI.Controllers
                     //     "select * from Finduser('" + Appid + "')");
                     //tmpuser = query1.SingleOrDefault();
 
-                    //OLD CODE, now all SQL stuff happens on the SQL server
+                    
                     var query = from p in context.Users
                                 where p.AppId.Trim() == Appid.Trim()
                                 select p;
@@ -147,17 +147,31 @@ namespace ResturantBusserAPI.Controllers
         }
         // used to update, should be done in the User APP, 
         [HttpPost]
-        public IHttpActionResult UpdatUser(User user)
+        public async Task<IHttpActionResult> UpdatUser(User user)
         {
 
-            var usd = dbContext.Users.Find(user.UserId);
+            User usd = null;
 
-            usd.UserName = user.UserName;
+            using (var context = new ApiDbContext())
+            {
+                var query = from p in context.Users
+                            where p.Email.ToLower().Trim() == user.Email.ToLower().Trim()
+                            select p;
+
+                // This will raise an exception if entity not found
+                // Use SingleOrDefault instead
+                usd = query.Single();
+
+
+            }
+
+
+            usd.AppId = user.AppId;
             //usd.password = user.password;
 
 
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
-            dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
 
             return Ok();
         }
