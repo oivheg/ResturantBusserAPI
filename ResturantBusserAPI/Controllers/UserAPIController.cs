@@ -22,8 +22,12 @@ namespace ResturantBusserAPI.Controllers
         [HttpPost]
         public async Task<IHttpActionResult> CreateUser(User User)
         {
+          
             using (var dbCtx = new ApiDbContext())
             {
+               
+              
+               
                 //Add student object into Student's EntitySet
                 dbCtx.Users.Add(User);
                 // call SaveChanges method to save student & StudentAddress into database
