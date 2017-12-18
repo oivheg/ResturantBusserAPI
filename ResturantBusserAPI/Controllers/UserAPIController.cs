@@ -334,12 +334,14 @@ namespace ResturantBusserAPI.Controllers
             if (CancelVib)
             {
                 String value = "cancelVibration";
-                json = ("{ \"data\": { \"Action\": \"" + value + "\" },\"to\" : \"" + AppID + "\"}");
+                json = ("{ \"data\": { \"Action\": \"" + value + "\" },  \"content-available\":\"true\",\"priority\":\"high\",  \"to\": \"" + AppID + "\"}");
+               //IOS //json = ("{ \"data\": { \"Action\": \"" + value + "\" },  \"content-available\":\"true\",\"priority\":\"high\",  \"notification\":{ \"sound\": \" \" }, \"to\": \"" + AppID + "\"}");
             }
             else
             {
 
-                 json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"to\" : \"" + AppID + "\"}");
+                 json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  }, \"content-available\":\"true\", \"priority\":\"high\" , \"to\" : \"" + AppID + "\"}");
+             // IOS  //json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  }, \"content-available\":\"true\", \"priority\":\"high\"  \"notification\":{\"sound\": \" \" } ,\"to\" : \"" + AppID + "\"}");
             }
 
             return SendData(json);
