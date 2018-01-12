@@ -5,29 +5,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Web.Http;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Web.Http;
 
 namespace ResturantBusserAPI.Controllers
 {
     public class UserAPIController : ApiController
     {
-        ApiDbContext dbContext = null;
+        private ApiDbContext dbContext = null;
+
         public UserAPIController()
         {
             dbContext = new ApiDbContext();
         }
+
         // CreateUser are used by busser app to create a user, a new user are only added if the user input a correct master ID:
         [HttpPost]
         public async Task<IHttpActionResult> CreateUser(User User)
         {
-          
             using (var dbCtx = new ApiDbContext())
             {
-               
-              
-               
                 //Add student object into Student's EntitySet
                 dbCtx.Users.Add(User);
                 // call SaveChanges method to save student & StudentAddress into database
@@ -54,14 +51,13 @@ namespace ResturantBusserAPI.Controllers
         }
 
         // This should only be used by the MASTER and not the busser app.
-        // This Should GET all users that are currently active, this should only return the ones that are registered on the same MasterId. 
+        // This Should GET all users that are currently active, this should only return the ones that are registered on the same MasterId.
         [HttpGet]
         public List<User> GetAllActiveusers(String Appid)
         {
-
             //             List<User> list =  dbContext.Users.ToList();
             List<User> list = new List<User>();
-          Master mstr =  dbContext.Masters.SingleOrDefault(_Master => _Master.AppId == Appid);
+            Master mstr = dbContext.Masters.SingleOrDefault(_Master => _Master.AppId == Appid);
             var returnValue = (from e in dbContext.Users
                                join o in dbContext.TimeStamps on e.UserGuid equals o.UserGUID
                                select new
@@ -72,7 +68,6 @@ namespace ResturantBusserAPI.Controllers
                                    o.Inn
                                });
 
-
             returnValue = returnValue.OrderBy(x => x.Inn);
             foreach (var user in returnValue)
             {
@@ -80,7 +75,6 @@ namespace ResturantBusserAPI.Controllers
                 var active = user.Active;
 
                 // here we crate teh jsson array, so we area ble to use the data in the app.
-               
 
                 if (tmpUMID == mstr.MasterKey.ToLower() && active)
                 {
@@ -88,12 +82,11 @@ namespace ResturantBusserAPI.Controllers
                     tmpUser.UserName = user.UserName;
                     list.Add(tmpUser);
                 }
-
             }
-
 
             return list;
         }
+
         // DeleteUser, right now this are not used.
         [HttpGet]
         public IHttpActionResult DeleteUser(int id)
@@ -105,8 +98,8 @@ namespace ResturantBusserAPI.Controllers
             dbContext.SaveChangesAsync();
 
             return Ok(user.UserId + " " + user.UserName + " is deleted successfully.");
-
         }
+
         // This is used to veiw one user, and might be used by the busser to shwo the current user to the user. [FromBody]
         [HttpGet]
         public IHttpActionResult FindUser(String Appid, String Email = "")
@@ -115,7 +108,6 @@ namespace ResturantBusserAPI.Controllers
             String tmpuser = null;
             using (var context = new ApiDbContext())
             {
-
                 if (Email != "")
                 {
                     var query = from p in context.Users
@@ -131,29 +123,26 @@ namespace ResturantBusserAPI.Controllers
                     //     "select * from Finduser('" + Appid + "')");
                     //tmpuser = query1.SingleOrDefault();
 
-                    
                     var query = from p in context.Users
                                 where p.AppId.Trim() == Appid.Trim()
                                 select p;
                     user = query.SingleOrDefault();
-}
-
+                }
 
                 // This will raise an exception if entity not found
                 // Use SingleOrDefault instead
                 //user.UserName = tmpuser;
                 user.UserName = user.UserName.Trim();
-
             }
             dbContext.Entry(user).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
             return Ok(user);
         }
-        // used to update, should be done in the User APP, 
+
+        // used to update, should be done in the User APP,
         [HttpPost]
         public async Task<IHttpActionResult> UpdatUser(User user)
         {
-
             User usd = null;
 
             using (var context = new ApiDbContext())
@@ -165,14 +154,10 @@ namespace ResturantBusserAPI.Controllers
                 // This will raise an exception if entity not found
                 // Use SingleOrDefault instead
                 usd = query.Single();
-
-
             }
-
 
             usd.AppId = user.AppId;
             //usd.password = user.password;
-
 
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             await dbContext.SaveChangesAsync();
@@ -189,7 +174,6 @@ namespace ResturantBusserAPI.Controllers
 
             Master mstr = null;
 
-
             using (var context = new ApiDbContext())
             {
                 var query = from p in context.Masters
@@ -199,8 +183,6 @@ namespace ResturantBusserAPI.Controllers
                 // This will raise an exception if entity not found
                 // Use SingleOrDefault instead
                 mstr = query.Single();
-
-
             }
             String MstrAppId = "";
             byte[] bytes = Encoding.Default.GetBytes(myUser.UserName);
@@ -217,24 +199,33 @@ namespace ResturantBusserAPI.Controllers
             String _AppID = "cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd";
             ;
 
-
-
-
             foreach (var user in dbContext.Users)
             {
                 if (mstrKey.Trim().ToLower() == user.MasterKey.Trim().ToLower() && user.Active == true)
                 {
                     FCMClient(user.AppId);
                 }
-
-
             }
 
             // FCMRElay();
             var usd = dbContext.Users;
 
+            return Ok();
+        }
 
+        [HttpPost]
+        public IHttpActionResult CancelDinnerForAll(String mstrKey)
+        {
+            foreach (var user in dbContext.Users)
+            {
+                if (mstrKey.Trim().ToLower() == user.MasterKey.Trim().ToLower() && user.Active == true)
+                {
+                    FCMClient(user.AppId, true);
+                }
+            }
 
+            // FCMRElay();
+            var usd = dbContext.Users;
 
             return Ok();
         }
@@ -245,7 +236,6 @@ namespace ResturantBusserAPI.Controllers
             //String _AppID = "cCuGQAtZxWQ:APA91bF286hnYN_OYYdOjPg4noCg2cIpfwRwRLssPE0O63so0UZowaqUhcpLgPAMBrXiFakdogiSgviyJ0Nx7OHwJr03u9AS-IopRNikTwfw7UhOFJJuTivVuLw7z-aD9Lty9g8H_bcd";
             String _AppID;
 
-            
             User myUser = dbContext.Users.SingleOrDefault(_user => _user.UserName == user.UserName);
             _AppID = myUser.AppId;
 
@@ -271,56 +261,44 @@ namespace ResturantBusserAPI.Controllers
         [HttpPost]
         public IHttpActionResult ClientAppId(User user)
         {
-
             var usd = dbContext.Users.SingleOrDefault(_user => _user.UserId == user.UserId);
             usd.AppId = user.AppId;
-
 
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
 
             return Ok();
         }
+
         [HttpPost]
         public IHttpActionResult MasterAppId(Master master)
         {
-
             Master mstr;
 
-
-          
-                if (master.Email != null)
-                {
-                    
-                    //var query1 = from p in dbContext.Masters
-                    //            where p.Email.ToLower().Trim() == master.Email.ToLower().Trim()
-                    //            select p;
+            if (master.Email != null)
+            {
+                //var query1 = from p in dbContext.Masters
+                //            where p.Email.ToLower().Trim() == master.Email.ToLower().Trim()
+                //            select p;
                 mstr = dbContext.Masters.SingleOrDefault(_master => _master.Email.ToLower().Trim() == master.Email.ToLower().Trim());
                 mstr.AppId = master.AppId.Trim();
-                }
-                else
-                {
-             
-                    //var query = from p in dbContext.Masters
-                    //            where p.AppId.ToLower().Trim() == master.AppId.ToLower().Trim()
-                    //            select p;
-                    //mstr = query.SingleOrDefault();
-                    mstr = dbContext.Masters.SingleOrDefault(_master => _master.AppId == master.AppId);
-                }
-                
+            }
+            else
+            {
+                //var query = from p in dbContext.Masters
+                //            where p.AppId.ToLower().Trim() == master.AppId.ToLower().Trim()
+                //            select p;
+                //mstr = query.SingleOrDefault();
+                mstr = dbContext.Masters.SingleOrDefault(_master => _master.AppId == master.AppId);
+            }
 
-                // This will raise an exception if entity not found
-                // Use SingleOrDefault instead
-               
-              
+            // This will raise an exception if entity not found
+            // Use SingleOrDefault instead
 
-         
-
-          if (mstr == null )
+            if (mstr == null)
             {
                 return NotFound();
             }
-
 
             dbContext.Entry(mstr).State = System.Data.Entity.EntityState.Modified;
             dbContext.SaveChangesAsync();
@@ -328,24 +306,22 @@ namespace ResturantBusserAPI.Controllers
             return Ok(mstr.MasterKey);
         }
 
-        static String FCMClient(String AppID, Boolean CancelVib = false)
+        private static String FCMClient(String AppID, Boolean CancelVib = false)
         {
             String json = "";
             if (CancelVib)
             {
                 String value = "cancelVibration";
-                json = ("{ \"data\": { \"Action\": \"" + value + "\" },  \"content-available\":\"true\",\"priority\":\"high\",  \"to\": \"" + AppID + "\"}");
-               //IOS //json = ("{ \"data\": { \"Action\": \"" + value + "\" },  \"content-available\":\"true\",\"priority\":\"high\",  \"notification\":{ \"sound\": \" \" }, \"to\": \"" + AppID + "\"}");
+                json = ("{ \"data\": { \"Action\": \"" + value + "\" }, \"content_available\" : true,\"priority\":\"high\",  \"to\": \"" + AppID + "\"}");
+                //IOS //json = ("{ \"data\": { \"Action\": \"" + value + "\" },  \"content-available\":\"true\",\"priority\":\"high\",  \"notification\":{ \"sound\": \" \" }, \"to\": \"" + AppID + "\"}");
             }
             else
             {
-
-                 json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  }, \"content-available\":\"true\", \"priority\":\"high\" , \"to\" : \"" + AppID + "\"}");
-             // IOS  //json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  }, \"content-available\":\"true\", \"priority\":\"high\"  \"notification\":{\"sound\": \" \" } ,\"to\" : \"" + AppID + "\"}");
+                json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  },\"content_available\" : true, \"priority\":\"high\" , \"to\" : \"" + AppID + "\"}");
+                // IOS  //json = ("{ \"data\": { \"title\": \"Maten er Ferdig\",\"body\":\"Bord 35 er klar for henting\", \"sound\": \"default\"  }, \"content-available\":\"true\", \"priority\":\"high\"  \"notification\":{\"sound\": \" \" } ,\"to\" : \"" + AppID + "\"}");
             }
 
             return SendData(json);
-
         }
 
         private static string SendData(string json)
@@ -359,14 +335,10 @@ namespace ResturantBusserAPI.Controllers
             }
         }
 
-        static String FCMMaster(String AppID)
+        private static String FCMMaster(String AppID)
         {
             return SendDataToMaster(AppID, "refresh", "");
-
-
         }
-
-      
 
         private static string SendDataToMaster(string AppID, string value, string user)
         {
@@ -389,13 +361,13 @@ namespace ResturantBusserAPI.Controllers
 
             //User usd = dbContext.Users.SingleOrDefault(_user => _user.UserName.Trim() == user.UserName.Trim());
             //var usd = dbContext.Users.Find(user.UserId);
-            var usd = dbContext.Users.SingleOrDefault(_user => _user.AppId.ToLower().Trim()  == user.AppId.ToLower().Trim());
+            var usd = dbContext.Users.SingleOrDefault(_user => _user.AppId.ToLower().Trim() == user.AppId.ToLower().Trim());
 
             //// var mstr = dbContext.Masters.Find(usd.MasterKey.Trim());
-           
-            //need to prevent aldready loggen in user from logging in again, either "login out" fucntion or just oversee. porblem lies with if there is multiple timestamps. 
 
-            // probalby just check if ther is exsisting timestamp and just use that . 
+            //need to prevent aldready loggen in user from logging in again, either "login out" fucntion or just oversee. porblem lies with if there is multiple timestamps.
+
+            // probalby just check if ther is exsisting timestamp and just use that .
 
             if (user.Active)
             {
@@ -415,16 +387,12 @@ namespace ResturantBusserAPI.Controllers
                     // This will raise an exception if entity not found
                     // Use SingleOrDefault instead
                     Tsmp = query.SingleOrDefault();
-
-
                 }
 
                 Tsmp.Out = DateTime.Now;
 
                 dbContext.Entry(Tsmp).State = System.Data.Entity.EntityState.Modified;
-               
             }
-
 
             using (var context = new ApiDbContext())
             {
@@ -435,10 +403,7 @@ namespace ResturantBusserAPI.Controllers
                 // This will raise an exception if entity not found
                 // Use SingleOrDefault instead
                 mstr = query.Single();
-
-
             }
-
 
             //usd.UserName = user.UserName;
             usd.Active = user.Active;
@@ -453,16 +418,16 @@ namespace ResturantBusserAPI.Controllers
                 FCMMaster(mstr.AppId);
             }
 
-            //Add  object into  EntitySet ( sql database) 
+            //Add  object into  EntitySet ( sql database)
 
             dbContext.Entry(usd).State = System.Data.Entity.EntityState.Modified;
             //Saves chagnes to entity Data, Sql database
             dbContext.SaveChangesAsync();
             //FCMMaster();
 
-
             return Ok();
         }
+
         // This is a test function, and will use this to test different stuff.
         [HttpPost]
         public IHttpActionResult testUser(int id)

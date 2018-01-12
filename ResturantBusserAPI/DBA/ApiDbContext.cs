@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using ResturantBusserAPI.Models;
 using System.Data.Entity;
-using ResturantBusserAPI.Models;
 
 namespace ResturantBusserAPI.DBA
 {
@@ -11,12 +7,10 @@ namespace ResturantBusserAPI.DBA
     {
         public ApiDbContext() : base("Connection")
         {
-           
         }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Master> Masters { get; set; }
         public DbSet<TimeStamp> TimeStamps { get; set; }
     }
-
 }
