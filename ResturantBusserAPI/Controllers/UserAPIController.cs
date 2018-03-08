@@ -306,6 +306,24 @@ namespace ResturantBusserAPI.Controllers
             return Ok(mstr.MasterKey);
         }
 
+        [HttpGet]
+        public IHttpActionResult ChckKey(String mKey)
+        {
+            Master mstr;
+
+            mstr = dbContext.Masters.SingleOrDefault(_master => _master.MasterKey.Trim().ToLower() == mKey.Trim().ToLower());
+
+            // This will raise an exception if entity not found
+            // Use SingleOrDefault instead
+
+            if (mstr == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(mstr.MasterKey);
+        }
+
         private static String FCMClient(String AppID, Boolean CancelVib = false)
         {
             String json = "";
