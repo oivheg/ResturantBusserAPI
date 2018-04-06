@@ -306,12 +306,12 @@ namespace ResturantBusserAPI.Controllers
             return Ok(mstr.MasterKey);
         }
 
-        [HttpGet]
-        public IHttpActionResult ChckKey(String mKey)
+        [HttpPost]
+        public IHttpActionResult ChckKey(Master mKey)
         {
             Master mstr;
 
-            mstr = dbContext.Masters.SingleOrDefault(_master => _master.MasterKey.Trim().ToLower() == mKey.Trim().ToLower());
+            mstr = dbContext.Masters.SingleOrDefault(_master => _master.MasterKey.Trim().ToLower() == mKey.MasterKey.Trim().ToLower());
 
             // This will raise an exception if entity not found
             // Use SingleOrDefault instead
@@ -321,7 +321,7 @@ namespace ResturantBusserAPI.Controllers
                 return NotFound();
             }
 
-            return Ok(mstr.MasterKey);
+            return Ok(true);
         }
 
         private static String FCMClient(String AppID, Boolean CancelVib = false)
@@ -342,12 +342,19 @@ namespace ResturantBusserAPI.Controllers
             return SendData(json);
         }
 
+        //private static String Master_Key = "AAAALvVIaEA:APA91bEyyCkyg3vALRMMLh42nCPpN1OWzXl8GpZMWYuh7nzzY14rWcRVeNDEt9W3kLFhyKWMB7WbTJ7Sbh0YgiTPlBy8Is8-2P-zSpkDH6cbt10JTN_--oOIwuGf5h3uGCNpCWkGNW3y";
+
+        //private static String Busser_key = "AAAAvL8vPx4:APA91bFmAuSguRJ2PCcnXo14yeVePTbAa21nyNoQwn5JPJn9Bc9VPW8LvbG4I7On3JDLNnl-hKkxjCiDxV7vLRSYkT4PUN1BwrQBuKYdFQMiPNYyy_IBG3RvFbJKi1CjV2HzGHTSWwDd";
+        private static String Busser_key = "AAAA_HJQnFk:APA91bFYl-1n55IAPiV7p4Wdl8K6nROOB7m6VtQdpWsWmGT6H4CE3TwAnVoYSnD3HyJQkGQKOtjoYFikqvmpV6vXahLVGjgkwTANVr1OOiTmHpIbP8ka8QPhjarxiAs2b_mvEnHWdfUl";
+
+        private static String Master_Key = "AAAAOCJo_R8:APA91bE_wlFq4MNF2SG53F1Zf6MP2fdYbGUU0qoZFCXdkYYuu4UqdlSp7-MYayTevcm4MQTWv1B8v5GOjIJd8yxnK_T8oHPrFvifWJx0rNqd2dMwzja5nFVPYI7mn3MqkEh8wiEKvU7s";
+
         private static string SendData(string json)
         {
             using (WebClient client = new WebClient())
             {
                 client.Headers[HttpRequestHeader.ContentType] = "application/json";
-                client.Headers.Add("Authorization", "key=AAAAvL8vPx4:APA91bFmAuSguRJ2PCcnXo14yeVePTbAa21nyNoQwn5JPJn9Bc9VPW8LvbG4I7On3JDLNnl-hKkxjCiDxV7vLRSYkT4PUN1BwrQBuKYdFQMiPNYyy_IBG3RvFbJKi1CjV2HzGHTSWwDd");
+                client.Headers.Add("Authorization", "key=" + Busser_key);
                 var response = client.UploadString("https://fcm.googleapis.com/fcm/send", json);
                 return response;
             }
@@ -364,7 +371,7 @@ namespace ResturantBusserAPI.Controllers
             using (WebClient client = new WebClient())
             {
                 client.Headers[HttpRequestHeader.ContentType] = "application/json";
-                client.Headers.Add("Authorization", "key=AAAALvVIaEA:APA91bEyyCkyg3vALRMMLh42nCPpN1OWzXl8GpZMWYuh7nzzY14rWcRVeNDEt9W3kLFhyKWMB7WbTJ7Sbh0YgiTPlBy8Is8-2P-zSpkDH6cbt10JTN_--oOIwuGf5h3uGCNpCWkGNW3y");
+                client.Headers.Add("Authorization", "key=" + Master_Key);
                 var response = client.UploadString("https://fcm.googleapis.com/fcm/send", json);
                 return response;
             }
