@@ -1,4 +1,6 @@
-﻿using ResturantBusserAPI.DBA;
+﻿using Microsoft.Ajax.Utilities;
+using Newtonsoft.Json;
+using ResturantBusserAPI.DBA;
 using ResturantBusserAPI.Models;
 using System;
 using System.Collections.Generic;
@@ -6,7 +8,9 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
+using System.Web.Script.Serialization;
 
 namespace ResturantBusserAPI.Controllers
 {
@@ -185,7 +189,7 @@ namespace ResturantBusserAPI.Controllers
                 mstr = query.Single();
             }
             String MstrAppId = "";
-            byte[] bytes = Encoding.Default.GetBytes(myUser.UserName);
+            byte[] bytes = Encoding.UTF8.GetBytes(myUser.UserName);
             String tmpUserName = Encoding.UTF8.GetString(bytes);
             MstrAppId = mstr.AppId;
             SendDataToMaster(MstrAppId, "recieved", tmpUserName);
@@ -367,13 +371,20 @@ namespace ResturantBusserAPI.Controllers
 
         private static string SendDataToMaster(string AppID, string value, string user)
         {
-            String json = ("{ \"data\": { \"Action\": \"" + value + "\",\"user\":\"" + user + "\" },\"to\" : \"" + AppID + "\"}");
+            string tjson = ("{ \"data\": { \"Action\": \"" + value + "\",\"user\": \"" + user.Trim() + "\",}\"to\" : \"" + AppID + "\"}");
+
+            //string tjson = ("{ \"data\": { \"Action\": \"" + value + "\",\"user\":\"" + user + "\" },\"to\" : \"" + AppID + "\"}");
+
             using (WebClient client = new WebClient())
             {
-                client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                byte[] bytes = Encoding.UTF8.GetBytes(tjson);
+                String tmpUserName = Encoding.UTF8.GetString(bytes);
+                client.Encoding = System.Text.Encoding.UTF8;
+                client.Headers[HttpRequestHeader.ContentType] = "application/json; charset=UTF-8";
+                // client.Headers[HttpRequestHeader.ContentLength] = bytes.Length.ToString();
+
                 client.Headers.Add("Authorization", "key=" + Master_Key);
-                var response = client.UploadString("https://fcm.googleapis.com/fcm/send", json);
-                return response;
+                return client.UploadString("https://fcm.googleapis.com/fcm/send", tjson);
             }
         }
 
@@ -455,7 +466,7 @@ namespace ResturantBusserAPI.Controllers
 
         // This is a test function, and will use this to test different stuff.
         [HttpPost]
-        public IHttpActionResult testUser(int id)
+        public IHttpActionResult testUser(string id)
         {
             var user = dbContext.Users.Find(id);
             user.Active = false;
